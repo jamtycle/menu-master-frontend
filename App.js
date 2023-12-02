@@ -1,44 +1,65 @@
-import React from 'react';
-import { Text, SafeAreaView, StyleSheet, View } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+// AsyncStorage
+import { SafeAreaView, StyleSheet } from 'react-native';
+// Navigation
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
+// Stack Navigator
+import { createStackNavigator } from '@react-navigation/stack';
+
+// Components
 import Login from './components/Login';
 import PrepList from './components/PrepList';
+import InventoryManagement from './components/InventoryManagement';
+import OtherRolesScreen from './components/OtherRolesScreen';
+import RecipeDetails from './components/RecipeDetails'; 
 
-const AppState = {
-  LoginPage: 0,
-  PrepPage: 1,
-}
+const Stack = createStackNavigator();
 
 export default function App() {
-  const [appState, setAppState] = React.useState(AppState.LoginPage);
+  const [userRole, setUserRole] = useState(null);
+  const navigationRef = useRef();
 
-  const renderElement = () => {
-    if (appState === AppState.LoginPage) {
-      return <Login onLogin={onLogin} />;
-    } else if (appState === AppState.PrepPage) {
-      return <PrepList />;
-    } else {
-      return <></>;
+  useEffect(() => {
+    if (userRole && navigationRef.current) {
+      switch (userRole) {
+        case 'chef':
+          navigationRef.current.navigate('PrepList');
+          break;
+        case 'manager':
+          navigationRef.current.navigate('InventoryManagement');
+          break;
+        default:
+          navigationRef.current.navigate('OtherRoles');
+          break;
+      }
     }
-  };
-
-  const onLogin = () => {
-    setAppState(AppState.PrepPage);
+  }, [userRole, navigationRef]);
+  
+  const onLogin = (role) => {
+    // Set the user role based on the selected role
+    setUserRole(role);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {renderElement()}
-    </SafeAreaView>
+    <NavigationContainer ref={navigationRef}>
+      <SafeAreaView style={styles.container}>
+        <Stack.Navigator initialRouteName="Login">
+          <Stack.Screen name="Login">
+            {props => <Login {...props} onLoginProp={onLogin} />}
+          </Stack.Screen>
+          <Stack.Screen name="PrepList" component={PrepList} />
+          <Stack.Screen name="RecipeDetails" component={RecipeDetails} />
+          <Stack.Screen name="InventoryManagement" component={InventoryManagement} />
+          <Stack.Screen name="OtherRoles" component={OtherRolesScreen} />
+        </Stack.Navigator>
+      </SafeAreaView>
+    </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     backgroundColor: '#ecf0f1',
-    padding: 8,
   },
 });
-
-// <Login onLogin={onLogin} />

@@ -1,140 +1,160 @@
-import React from "react";
-import { Text, TextInput, StyleSheet, ImageBackground, Button, Alert, View } from 'react-native';
-import { SelectList } from 'react-native-dropdown-select-list'
-import BouncyCheckbox from "react-native-bouncy-checkbox";
+import React, { useState, useEffect } from 'react';
+import { Text, View, StyleSheet, Button, Alert, FlatList } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SelectList } from 'react-native-dropdown-select-list';
+import CheckBox from 'react-native-check-box';
 
-const data = [
-  { key: '1', value: 'Duck' },
-  { key: '2', value: 'Chicken' },
-  { key: '3', value: 'Beef' },
+// Sample data for recipes
+const recipeData = [
+  { key: '1', value: 'Duck Risotto', ingredients: ['Duck meat', 'Spices'], steps: ['Step 1', 'Step 2', 'Step 4'] },
+  { key: '2', value: 'Chicken Supreme', ingredients: ['Chicken meat', 'Herbs', 'Salt', 'Pepper'], steps: ['Step 1', 'Step 2', 'Step 3'] },
+  { key: '3', value: 'Braised Beef Shortrib', ingredients: ['Beef Shortrib', 'Seasonings', 'Mashed Potatoes'], steps: ['Step 1', 'Step 2', 'Step 3'] },
 ];
 
+export default function PrepList({ navigation }) {
+  const [prepList, setPrepList] = useState([]);
+  const [selectedRecipeValue, setSelectedRecipeValue] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
 
-export default function PrepList(props) {
-  const [prepList, setPrepList] = React.useState(["Duck", "Beef"]);
-  const [finishedList, setFinishedList] = React.useState([]);
-  const [selectedItem, setSelectedItem] = React.useState(null);
+  useEffect(() => {
+    initializeData();
+  }, []);
 
-  const onItemAdd = () => {
-    if (!selectedItem) return;
+  const initializeData = async () => {
+    try {
+      let storedPrepList = await AsyncStorage.getItem('prepList');
+      if (storedPrepList === null) {
+        storedPrepList = recipeData.map(item => ({
+          ...item,
+          name: item.value,
+          status: 'pending'
+        }));
+        await AsyncStorage.setItem('prepList', JSON.stringify(storedPrepList));
+      } else {
+        storedPrepList = JSON.parse(storedPrepList);
+      }
+      setPrepList(storedPrepList);
+    } catch (error) {
+      console.error('Failed to initialize prep list data', error);
+    }
+  };  
+  
+  useEffect(() => {
+    initializeData();
+  }, []);
+  
+  const onItemAdd = async () => {
+    if (!selectedRecipeValue) {
+      Alert.alert('Please select a recipe to add');
+      return;
+    }
+  
+    const selectedRecipe = recipeData.find(r => r.value === selectedRecipeValue);
+    if (selectedRecipe) {
+      const newItem = {
+        name: selectedRecipe.value,
+        ingredients: selectedRecipe.ingredients,
+        status: 'pending'
+      };
+  
+      const updatedPrepList = [...prepList, newItem];
+      setPrepList(updatedPrepList);
+      await AsyncStorage.setItem('prepList', JSON.stringify(updatedPrepList));
+    }
+  };  
 
-    Alert.alert(selectedItem);
-
-    let pl = prepList;
-    if (!pl) pl = [];
-    setPrepList([...pl, selectedItem]);
+  const handleSelectItem = (itemName) => {
+    if (selectedItems.includes(itemName)) {
+      setSelectedItems(selectedItems.filter(item => item !== itemName));
+    } else {
+      setSelectedItems([...selectedItems, itemName]);
+    }
   };
 
-  const onItemFinished = (_value, _index, _amt) => {
-    const name = prepList[_index];
+  const markItemsAsFinished = async () => {
+    let updatedPrepList = prepList.map(item => {
+      if (selectedItems.includes(item.name)) {
+        return { ...item, status: 'finished' };
+      }
+      return item;
+    });
 
-    setFinishedList([...finishedList, { name: name, amount: _amt}]);
-
-    const list = prepList;
-    list.splice(_index, 1);
-    setPrepList(list);
+    setPrepList(updatedPrepList);
+    await AsyncStorage.setItem('prepList', JSON.stringify(updatedPrepList));
+    setSelectedItems([]);
   };
 
-  const renderList = () => {
-    return (
-      <View>
-        {prepList.map((x, i) => {
-          const val = (Math.random() * 100).toFixed(2);
-          return (
-            <View style={{ flexDirection: "row", justifyContent: "center", width: "100%", marginBottom: 10 }}>
-              <View style={{ justifyContent: "center", width: "40%" }}>
-                <BouncyCheckbox onPress={(isChecked: boolean) => onItemFinished(isChecked, i, val)} text={x} textStyle={{ color: "black", fontSize: 18 }} />
-              </View>
-              <View style={{ justifyContent: "center", width: "40%" }}>
-                <Text style={styles.subTitle}>{val}</Text>
-              </View><View style={{ justifyContent: "center", width: "20%" }}>
-                <Button title="Go to"></Button>
-              </View>
-            </View>
-          );
-        })}
-      </View>
-    );
+  const showRecipeCard = (recipeName) => {
+    const recipe = recipeData.find(r => r.value === recipeName);
+    if (recipe) {
+      navigation.navigate('RecipeDetails', { recipe });
+    } else {
+      Alert.alert('Error', 'Recipe not found');
+    }
   };
-
-  const renderFinishedList = () => {
-    return (
-      <View>
-        {finishedList.map((x) => {
-          return (
-            <View style={{ flexDirection: "row", justifyContent: "center", width: "100%", marginBottom: 10 }}>
-              <View style={{ justifyContent: "center", width: "40%" }}>
-                <Text style={styles.subTitle}>{x.name}</Text>
-              </View>
-              <View style={{ justifyContent: "center", width: "40%" }}>
-                <Text style={styles.subTitle}>{x.amount}</Text>
-              </View><View style={{ justifyContent: "center", width: "20%" }}>
-                <Button title="Go to"></Button>
-              </View>
-            </View>
-          );
-        })}
-      </View>
-    );
-  }
-
+  
+  const renderItem = ({ item }) => (
+    <View style={styles.listItem}>
+      <CheckBox
+        isChecked={selectedItems.includes(item.name)}
+        onClick={() => handleSelectItem(item.name)}
+      />
+      <Text style={styles.itemText}>{item.name}</Text>
+      <Button title="See Recipe" onPress={() => showRecipeCard(item.name)} />
+    </View>
+  );
+  
   return (
-    <>
-      <Text style={styles.text}>Perp List</Text>
-      <View style={styles.addNewItem}>
-        <View style={{ justifyContent: "center", width: "30%" }}>
-          <Button title="Add Item" onPress={onItemAdd} style={{ flex: 1 }} />
-        </View>
-        <View style={{ justifyContent: "center", width: "70%" }}>
-          <SelectList setSelected={(val) => setSelectedItem(val)} data={data} save="value" style={{ flex: 2 }} />
-        </View>
-      </View>
+    <View style={styles.container}>
+      <Text style={styles.header}>Prep List</Text>
 
-      <View style={{ flexDirection: "row", justifyContent: "center", width: "100%", marginBottom: 10 }}>
-        <View style={{ justifyContent: "center", width: "40%" }}>
-          <Text style={styles.subTitle}>Name</Text>
-        </View>
-        <View style={{ justifyContent: "center", width: "40%" }}>
-          <Text style={styles.subTitle}>Amount</Text>
-        </View><View style={{ justifyContent: "center", width: "20%" }}>
-          <Text style={styles.subTitle}>Recipe</Text>
-        </View>
-      </View>
+      <SelectList
+        setSelected={setSelectedRecipeValue}
+        data={recipeData.map(recipe => ({ key: recipe.value, value: recipe.value }))}
+        placeholder="Select a Recipe"
+      />
 
-      {renderList()}
+      <Button title="Add Item" onPress={onItemAdd} />
 
-      <Text style={styles.subTitle}>Finished</Text>
-      {renderFinishedList()}
+      <FlatList
+        data={prepList.filter(p => p.status === 'pending')}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => `prep-${index}`}
+      />
 
-    </>
+      <Button title="Finished" onPress={markItemsAsFinished} />
+
+      <Text style={styles.header}>Finished Items</Text>
+      <FlatList
+        data={prepList.filter(p => p.status === 'finished')}
+        renderItem={({ item }) => <Text style={styles.itemText}>{item.name}</Text>}
+        keyExtractor={(item, index) => `finished-${index}`}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  addNewItem: {
-    flexDirection: "row",
-    width: "100%",
-    justifyContent: "center",
-    gap: 10,
-    marginBottom: 20
+  container: {
+    flex: 1,
+    marginTop: 20,
+    paddingHorizontal: 10,
   },
-  text: {
-    color: 'black',
-    fontSize: 25,
+  header: {
+    fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
     marginBottom: 10,
   },
-  subTitle: {
-    color: 'black',
-    fontSize: 20,
-    fontWeight: 'semibold',
-    textAlign: 'center',
+  listItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    marginVertical: 8,
+    backgroundColor: '#f9c2ff',
+    borderRadius: 5,
+  },
+  itemText: {
+    fontSize: 18,
   },
 });
-
-// <Text style={styles.text}>Menu Master</Text>
-//       <Text style={styles.subTitle}>Welcome back</Text>
-
-//       <TextInput id="username" style={styles.input} onChangeText={onChangeUsername} value={username} placeholder={"Username"} />
-//       <TextInput id="password" secureTextEntry={true} style={styles.input} onChangeText={onChangePassword} value={password} placeholder={"Password"} />
