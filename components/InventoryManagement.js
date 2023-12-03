@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Button, TextInput } from 'react-native';
+import { View, Text, FlatList, Button, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Sample inventory data

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, Button, Alert, FlatList } from 'react-native';
+import { Text, View, Button, Alert, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SelectList } from 'react-native-dropdown-select-list';
 import CheckBox from 'react-native-check-box';
 
-// Sample data for recipes
 const recipeData = [
   { key: '1', value: 'Duck Risotto', ingredients: ['Duck meat', 'Spices'], steps: ['Step 1', 'Step 2', 'Step 4'] },
   { key: '2', value: 'Chicken Supreme', ingredients: ['Chicken meat', 'Herbs', 'Salt', 'Pepper'], steps: ['Step 1', 'Step 2', 'Step 3'] },
@@ -134,7 +133,7 @@ export default function PrepList({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
     flex: 1,
     marginTop: 20,
@@ -157,4 +156,4 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 18,
   },
-});
+};

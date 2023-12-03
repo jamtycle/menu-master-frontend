@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Text, TextInput, StyleSheet, ImageBackground, Button, Alert} from 'react-native';
+import { Text, TextInput, ImageBackground, Button, Alert} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 const image = { uri: 'https://culinarylabschool.com/wp-content/uploads/2019/06/Pros-and-cons-to-working-in-culinary-arts-CulinaryLab-School-1024x683.jpg' };
 
@@ -61,14 +60,14 @@ export default function Login({ navigation, onLoginProp }) {
 
       <TextInput 
         style={styles.input} 
-        onChangeText={setUsername} // Updated
+        onChangeText={setUsername}
         value={username} 
         placeholder="Username" 
       />
       <TextInput 
         secureTextEntry={true} 
         style={styles.input} 
-        onChangeText={setPassword} // Updated
+        onChangeText={setPassword}
         value={password} 
         placeholder="Password" 
       />

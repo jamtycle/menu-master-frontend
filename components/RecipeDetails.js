@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, ScrollView } from 'react-native';
+import { View, Text, Button, ScrollView } from 'react-native';
 
 const RecipeDetails = ({ route, navigation }) => {
   const recipe = route.params?.recipe;
@@ -31,7 +31,7 @@ const RecipeDetails = ({ route, navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
     flex: 1,
   },
@@ -68,6 +68,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-});
+};
 
 export default RecipeDetails;

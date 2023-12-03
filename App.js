@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 // AsyncStorage
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native';
 // Navigation
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 // Stack Navigator
@@ -18,6 +18,7 @@ const Stack = createStackNavigator();
 export default function App() {
   const [userRole, setUserRole] = useState(null);
   const navigationRef = useRef();
+  
 
   useEffect(() => {
     if (userRole && navigationRef.current) {
@@ -57,9 +58,9 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
     flex: 1,
     backgroundColor: '#ecf0f1',
   },
-});
+};
