@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Button, ScrollView } from 'react-native';
+import axios from 'axios';
 
 const RecipeDetails = ({ route, navigation }) => {
-  const recipe = route.params?.recipe;
-  
+  const [recipe, setRecipe] = useState(null);
+
+  useEffect(() => {
+    const fetchRecipeDetails = async () => {
+      const recipeId = route.params?.recipeId;
+
+      try {
+        const response = await axios.get(`http://170.187.155.55:27041/recipes/${recipeId}`);
+        setRecipe(response.data.data);
+      } catch (error) {
+        console.error('Error fetching recipe details', error);
+      }
+    };
+
+    fetchRecipeDetails();
+  }, [route.params]);
+
   if (!recipe) {
     return (
       <View style={styles.centered}>

@@ -22,7 +22,8 @@
     "react-native-check-box": "^2.1.7",
     "react-native-dropdown-select-list": "2.0.5",
     "react-native-paper": "4.9.2",
-    "react-native-web": "~0.18.10"
+    "react-native-web": "~0.18.10",
+    "axios": "1.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

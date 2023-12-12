@@ -1,31 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Button, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Sample inventory data
-const sampleInventory = [
-  { id: '1', name: 'Tomatoes', quantity: 100 },
-  { id: '2', name: 'Potatoes', quantity: 200 },
-  { id: '3', name: 'Onions', quantity: 150 },
-];
+import axios from 'axios';
 
 export default function InventoryManagement() {
   const [inventory, setInventory] = useState([]);
   const [editItemId, setEditItemId] = useState(null);
   const [editQuantity, setEditQuantity] = useState('');
 
-  // Initialize inventory data
   const initializeData = async () => {
     try {
-      const storedInventory = await AsyncStorage.getItem('inventory');
-      if (storedInventory === null) {
-        await AsyncStorage.setItem('inventory', JSON.stringify(sampleInventory));
-        setInventory(sampleInventory);
-      } else {
-        setInventory(JSON.parse(storedInventory));
-      }
+      const response = await axios.get('http://170.187.155.55:27041/products');
+      setInventory(response.data.data || []);
     } catch (error) {
-      console.error('Failed to initialize inventory data', error);
+      console.error('Failed to fetch inventory data', error);
     }
   };
 
@@ -33,12 +21,18 @@ export default function InventoryManagement() {
     initializeData();
   }, []);
 
-  const updateInventoryItem = async () => {
+  const updateInventoryItem = async (itemId) => {
     try {
-      const updatedInventory = inventory.map(item => 
-        item.id === editItemId ? { ...item, quantity: parseInt(editQuantity, 10) } : item
+      const updatedInventory = inventory.map(item =>
+        item._id === itemId ? { ...item, quantity: parseInt(editQuantity, 10) } : item
       );
-      await AsyncStorage.setItem('inventory', JSON.stringify(updatedInventory));
+
+      // Update the backend with the new quantity
+      await axios.put('http://170.187.155.55:27041/products', {
+        _id: itemId,
+        quantity: parseInt(editQuantity, 10),
+      });
+
       setInventory(updatedInventory);
       setEditItemId(null);
       setEditQuantity('');
@@ -50,24 +44,27 @@ export default function InventoryManagement() {
   const renderItem = ({ item }) => (
     <View style={styles.listItem}>
       <Text style={styles.itemName}>{item.name}</Text>
-      {editItemId === item.id ? (
-        <TextInput 
-          style={styles.input} 
-          onChangeText={setEditQuantity} 
-          value={editQuantity} 
-          keyboardType="numeric" 
+      {editItemId === item._id ? (
+        <TextInput
+          style={styles.input}
+          onChangeText={setEditQuantity}
+          value={editQuantity}
+          keyboardType="numeric"
           placeholder="Enter new quantity"
         />
       ) : (
         <Text style={styles.itemQuantity}>{`Quantity: ${item.quantity}`}</Text>
       )}
-      {editItemId === item.id ? (
-        <Button title="Save" onPress={updateInventoryItem} />
+      {editItemId === item._id ? (
+        <Button title="Save" onPress={() => updateInventoryItem(item._id)} />
       ) : (
-        <Button title="Edit" onPress={() => {
-          setEditItemId(item.id);
-          setEditQuantity(item.quantity.toString());
-        }} />
+        <Button
+          title="Edit"
+          onPress={() => {
+            setEditItemId(item._id);
+            setEditQuantity(item.quantity.toString());
+          }}
+        />
       )}
     </View>
   );
@@ -75,11 +72,7 @@ export default function InventoryManagement() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Inventory Management</Text>
-      <FlatList
-        data={inventory}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-      />
+      <FlatList data={inventory} keyExtractor={(item) => item._id} renderItem={renderItem} />
     </View>
   );
 }
