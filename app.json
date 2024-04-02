@@ -1,30 +1,46 @@
 {
-  "expo": {
-    "name": "menu-master-preps",
-    "slug": "snack-05c3b6d6-bcc6-483a-8a27-485a6d169b04",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "expo": {
+        "name": "menu-master-preps",
+        "slug": "snack-05c3b6d6-bcc6-483a-8a27-485a6d169b04",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "userInterfaceStyle": "light",
+        "splash": {
+            "image": "./assets/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#ffffff"
+        },
+        "assetBundlePatterns": ["**/*"],
+        "ios": {
+            "supportsTablet": true
+        },
+        "packagerOpts": {
+            "sourceExts": ["js", "json", "ts", "tsx", "jsx"]
+        },
+        "updates": {
+            "fallbackToCacheTimeout": 0
+        },
+        "android": {
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/adaptive-icon.png",
+                "backgroundColor": "#ffffff"
+            }
+        },
+        "web": {
+            "favicon": "./assets/favicon.png"
+        },
+        "plugins": [
+            [
+                "expo-font",
+                {
+                    "fonts": [
+                        "./assets/fonts/Urbanist.ttf",
+                        "./assets/fonts/Urbanist-Bold.ttf",
+                        "./assets/fonts/Urbanist-Black.ttf"
+                    ]
+                }
+            ]
+        ]
     }
-  }
 }
