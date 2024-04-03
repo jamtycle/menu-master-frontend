@@ -5,28 +5,29 @@ import { SelectList } from "react-native-dropdown-select-list";
 import CheckBox from "react-native-check-box";
 import axios from "axios";
 
-const recipeData = [
-    {
-        key: "1",
-        value: "Duck Risotto",
-        ingredients: ["Duck meat", "Spices"],
-        steps: ["Step 1", "Step 2", "Step 4"],
-    },
-    {
-        key: "2",
-        value: "Chicken Supreme",
-        ingredients: ["Chicken meat", "Herbs", "Salt", "Pepper"],
-        steps: ["Step 1", "Step 2", "Step 3"],
-    },
-    {
-        key: "3",
-        value: "Braised Beef Shortrib",
-        ingredients: ["Beef Shortrib", "Seasonings", "Mashed Potatoes"],
-        steps: ["Step 1", "Step 2", "Step 3"],
-    },
-];
+// const recipeData = [
+//     {
+//         key: "1",
+//         value: "Duck Risotto",
+//         ingredients: ["Duck meat", "Spices"],
+//         steps: ["Step 1", "Step 2", "Step 4"],
+//     },
+//     {
+//         key: "2",
+//         value: "Chicken Supreme",
+//         ingredients: ["Chicken meat", "Herbs", "Salt", "Pepper"],
+//         steps: ["Step 1", "Step 2", "Step 3"],
+//     },
+//     {
+//         key: "3",
+//         value: "Braised Beef Shortrib",
+//         ingredients: ["Beef Shortrib", "Seasonings", "Mashed Potatoes"],
+//         steps: ["Step 1", "Step 2", "Step 3"],
+//     },
+// ];
 
 export default function PrepList({ navigation }) {
+    const [recipes, setRecipes] = useState([]);
     const [prepList, setPrepList] = useState([]);
     const [selectedRecipeValue, setSelectedRecipeValue] = useState(null);
     const [selectedItems, setSelectedItems] = useState([]);
@@ -37,10 +38,25 @@ export default function PrepList({ navigation }) {
     }, []);
 
     const initializeData = async () => {
-        const preplist = await axios.get(
-                "http://170.187.155.55:27041/preplist"
-        );
-        
+        // const preplist = await axios.get(
+        //     "http://170.187.155.55:27041/preplist"
+        // );
+
+        axios
+            .get("http://170.187.155.55:27041/recipe")
+            .then((res) => {
+                console.log(res.data.data);
+                setRecipes(res.data.data);
+            });
+
+        // try {
+        //     const data = await axios.get("http://170.187.155.55:27041/recipe");
+        //     console.log(data);
+        //     // setRecipes(data.data);
+        // } catch (ex) {
+        //     console.log(ex);
+        // }
+
         // try {
         //     let storedPrepList = await AsyncStorage.getItem("prepList");
         //     if (storedPrepList === null) {
@@ -72,23 +88,44 @@ export default function PrepList({ navigation }) {
             return;
         }
 
-        const selectedRecipe = recipeData.find(
-            (r) => r.value === selectedRecipeValue
-        );
-        if (selectedRecipe) {
-            const newItem = {
-                name: selectedRecipe.value,
-                ingredients: selectedRecipe.ingredients,
-                status: "pending",
-            };
+        console.log(selectedRecipeValue);
 
-            const updatedPrepList = [...prepList, newItem];
-            setPrepList(updatedPrepList);
-            await AsyncStorage.setItem(
-                "prepList",
-                JSON.stringify(updatedPrepList)
-            );
-        }
+        const selectedRecipe = recipes.find(
+            (r) => r._id === selectedRecipeValue
+        );
+
+        console.log(selectedRecipe);
+
+        if (!selectedRecipe) return;
+
+        // setPrepList((prev) => { 
+        //     prev.push(selectedRecipe);
+        //     return prev;
+        // });
+
+        selectedRecipe.status = "pending";
+        const updatedPrepList = [...prepList, selectedRecipe];
+        setPrepList(updatedPrepList);
+
+        
+        // const selectedRecipe = recipes.find(
+        //     (r) => r.name === selectedRecipeValue
+        // );
+        // if (selectedRecipe) {
+        //     const newItem = {
+        //         name: selectedRecipe.value,
+        //         ingredients: selectedRecipe.ingredients,
+        //         status: "pending",
+        //     };
+
+        //     const updatedPrepList = [...prepList, newItem];
+        //     setPrepList(updatedPrepList);
+
+        //     await AsyncStorage.setItem(
+        //         "prepList",
+        //         JSON.stringify(updatedPrepList)
+        //     );
+        // }
     };
 
     const handleSelectItem = (itemName) => {
@@ -113,7 +150,7 @@ export default function PrepList({ navigation }) {
     };
 
     const showRecipeCard = (recipeName) => {
-        const recipe = recipeData.find((r) => r.value === recipeName);
+        const recipe = recipes.find((r) => r.name === recipeName);
         if (recipe) {
             navigation.navigate("RecipeDetails", { recipe });
         } else {
@@ -141,9 +178,9 @@ export default function PrepList({ navigation }) {
 
             <SelectList
                 setSelected={setSelectedRecipeValue}
-                data={recipeData.map((recipe) => ({
-                    key: recipe.value,
-                    value: recipe.value,
+                data={recipes.map((recipe) => ({
+                    key: recipe._id,
+                    value: recipe.name,
                 }))}
                 placeholder="Select a Recipe"
             />

@@ -4,22 +4,20 @@ import axios from "axios";
 
 const RecipeDetails = ({ route, navigation }) => {
     const [recipe, setRecipe] = useState(null);
+    const [ingredients, setIngredients] = useState([]);
 
     useEffect(() => {
-        const fetchRecipeDetails = async () => {
-            const recipeId = route.params?.recipeId;
+        const recipe = route.params?.recipe;
 
-            try {
-                const response = await axios.get(
-                    `http://170.187.155.55:27041/recipes/${recipeId}`
-                );
-                setRecipe(response.data.data);
-            } catch (error) {
-                console.error("Error fetching recipe details", error);
-            }
-        };
+        if (!recipe) return;
+        setRecipe(recipe);
 
-        fetchRecipeDetails();
+        // ingredient/65f8954489e6e77ac7fb1027?id=65f89bf889e6e77ac7fb1039
+        axios
+            .get(
+                "http://170.187.155.55:27041/ingredient/65f8954489e6e77ac7fb1027"
+            )
+            .then((res) => setIngredients(res.data.data));
     }, [route.params]);
 
     if (!recipe) {
@@ -37,9 +35,20 @@ const RecipeDetails = ({ route, navigation }) => {
                 <Text style={styles.title}>{recipe.name}</Text>
                 <Text style={styles.subtitle}>Ingredients:</Text>
                 {recipe.ingredients.map((ingredient, index) => (
-                    <Text key={index} style={styles.text}>
-                        {ingredient}
-                    </Text>
+                    <View key={index} style={styles.ingredient_container}>
+                        <Text style={styles.text}>
+                            {
+                                ingredients.find(
+                                    (i) => i._id === ingredient.ingredient_id
+                                )?.name
+                            }
+                        </Text>
+                        <Text style={styles.text}>
+                            {ingredient.quantity +
+                                "  " +
+                                ingredient.measure_unit}
+                        </Text>
+                    </View>
                 ))}
                 <Text style={styles.subtitle}>Steps:</Text>
                 {recipe.steps.map((step, index) => (
@@ -54,6 +63,11 @@ const RecipeDetails = ({ route, navigation }) => {
 };
 
 const styles = {
+    ingredient_container: {
+        flex: 1,
+        flexDirection: "row",
+        justifyContent: "space-between",
+    },
     container: {
         flex: 1,
     },
