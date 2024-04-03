@@ -10,10 +10,26 @@ export default function InventoryManagement() {
 
     const initializeData = async () => {
         try {
-            const response = await axios.get(
-                "http://170.187.155.55:27041/products"
+            const ingredient_response = await axios.get(
+                "http://170.187.155.55:27041/ingredient/65f8954489e6e77ac7fb1027"
             );
-            setInventory(response.data.data || []);
+            const inventory_response = await axios.get(
+                "http://170.187.155.55:27041/inventory"
+            );
+            for (let j = 0; j < ingredient_response.data.data.length; j++) {
+                ingredient_response.data.data[j].quantity = 0;
+            }
+
+            for (let i = 0; i < inventory_response.data.data.length; i++) {
+                for (let j = 0; j < ingredient_response.data.data.length; j++) {
+                    if (inventory_response.data.data[i].ingredient_id === ingredient_response.data.data[j]._id) {
+                        ingredient_response.data.data[j].quantity = inventory_response.data.data[i].stock || 0;
+                    }
+                }
+            }
+            console.log(ingredient_response.data.data);
+            console.log(inventory_response.data.data);
+            setInventory(ingredient_response.data.data || []);
         } catch (error) {
             console.error("Failed to fetch inventory data", error);
         }
@@ -32,7 +48,7 @@ export default function InventoryManagement() {
             );
 
             // Update the backend with the new quantity
-            await axios.put("http://170.187.155.55:27041/products", {
+            await axios.put("http://170.187.155.55:27041/ingredient/65f8954489e6e77ac7fb1027", {
                 _id: itemId,
                 quantity: parseInt(editQuantity, 10),
             });
@@ -94,6 +110,7 @@ const styles = {
     container: {
         flex: 1,
         padding: 10,
+        marginTop: 20,
     },
     header: {
         fontSize: 22,

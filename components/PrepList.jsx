@@ -3,7 +3,7 @@ import { Text, View, Button, Alert, FlatList } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SelectList } from "react-native-dropdown-select-list";
 import CheckBox from "react-native-check-box";
-// import axios from "axios";
+import axios from "axios";
 
 const recipeData = [
     {
@@ -37,25 +37,29 @@ export default function PrepList({ navigation }) {
     }, []);
 
     const initializeData = async () => {
-        try {
-            let storedPrepList = await AsyncStorage.getItem("prepList");
-            if (storedPrepList === null) {
-                storedPrepList = recipeData.map((item) => ({
-                    ...item,
-                    name: item.value,
-                    status: "pending",
-                }));
-                await AsyncStorage.setItem(
-                    "prepList",
-                    JSON.stringify(storedPrepList)
-                );
-            } else {
-                storedPrepList = JSON.parse(storedPrepList);
-            }
-            setPrepList(storedPrepList);
-        } catch (error) {
-            console.error("Failed to initialize prep list data", error);
-        }
+        const preplist = await axios.get(
+                "http://170.187.155.55:27041/preplist"
+        );
+        
+        // try {
+        //     let storedPrepList = await AsyncStorage.getItem("prepList");
+        //     if (storedPrepList === null) {
+        //         storedPrepList = recipeData.map((item) => ({
+        //             ...item,
+        //             name: item.value,
+        //             status: "pending",
+        //         }));
+        //         await AsyncStorage.setItem(
+        //             "prepList",
+        //             JSON.stringify(storedPrepList)
+        //         );
+        //     } else {
+        //         storedPrepList = JSON.parse(storedPrepList);
+        //     }
+        //     setPrepList(storedPrepList);
+        // } catch (error) {
+        //     console.error("Failed to initialize prep list data", error);
+        // }
     };
 
     useEffect(() => {
@@ -169,7 +173,7 @@ export default function PrepList({ navigation }) {
 const styles = {
     container: {
         flex: 1,
-        marginTop: 20,
+        marginTop: 40,
         paddingHorizontal: 10,
     },
     header: {
