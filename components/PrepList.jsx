@@ -1,85 +1,22 @@
 import { useState, useEffect } from "react";
 import { Text, View, Button, Alert, FlatList } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SelectList } from "react-native-dropdown-select-list";
 import CheckBox from "react-native-check-box";
 import axios from "axios";
-
-// const recipeData = [
-//     {
-//         key: "1",
-//         value: "Duck Risotto",
-//         ingredients: ["Duck meat", "Spices"],
-//         steps: ["Step 1", "Step 2", "Step 4"],
-//     },
-//     {
-//         key: "2",
-//         value: "Chicken Supreme",
-//         ingredients: ["Chicken meat", "Herbs", "Salt", "Pepper"],
-//         steps: ["Step 1", "Step 2", "Step 3"],
-//     },
-//     {
-//         key: "3",
-//         value: "Braised Beef Shortrib",
-//         ingredients: ["Beef Shortrib", "Seasonings", "Mashed Potatoes"],
-//         steps: ["Step 1", "Step 2", "Step 3"],
-//     },
-// ];
+import Theme from "../styles/colors";
 
 export default function PrepList({ navigation }) {
     const [recipes, setRecipes] = useState([]);
     const [prepList, setPrepList] = useState([]);
+    const [finishedItems, setFinishedItems] = useState([]);
     const [selectedRecipeValue, setSelectedRecipeValue] = useState(null);
     const [selectedItems, setSelectedItems] = useState([]);
 
     useEffect(() => {
-        // AsyncStorage.setItem("prepList", JSON.stringify(recipeData));
-        initializeData();
-    }, []);
-
-    const initializeData = async () => {
-        // const preplist = await axios.get(
-        //     "http://170.187.155.55:27041/preplist"
-        // );
-
-        axios
-            .get("http://170.187.155.55:27041/recipe")
-            .then((res) => {
-                console.log(res.data.data);
-                setRecipes(res.data.data);
-            });
-
-        // try {
-        //     const data = await axios.get("http://170.187.155.55:27041/recipe");
-        //     console.log(data);
-        //     // setRecipes(data.data);
-        // } catch (ex) {
-        //     console.log(ex);
-        // }
-
-        // try {
-        //     let storedPrepList = await AsyncStorage.getItem("prepList");
-        //     if (storedPrepList === null) {
-        //         storedPrepList = recipeData.map((item) => ({
-        //             ...item,
-        //             name: item.value,
-        //             status: "pending",
-        //         }));
-        //         await AsyncStorage.setItem(
-        //             "prepList",
-        //             JSON.stringify(storedPrepList)
-        //         );
-        //     } else {
-        //         storedPrepList = JSON.parse(storedPrepList);
-        //     }
-        //     setPrepList(storedPrepList);
-        // } catch (error) {
-        //     console.error("Failed to initialize prep list data", error);
-        // }
-    };
-
-    useEffect(() => {
-        initializeData();
+        axios.get("http://170.187.155.55:27041/recipe").then((res) => {
+            setRecipes(res.data.data);
+        });
     }, []);
 
     const onItemAdd = async () => {
@@ -88,65 +25,33 @@ export default function PrepList({ navigation }) {
             return;
         }
 
-        console.log(selectedRecipeValue);
-
         const selectedRecipe = recipes.find(
             (r) => r._id === selectedRecipeValue
         );
 
-        console.log(selectedRecipe);
-
         if (!selectedRecipe) return;
-
-        // setPrepList((prev) => { 
-        //     prev.push(selectedRecipe);
-        //     return prev;
-        // });
-
-        selectedRecipe.status = "pending";
-        const updatedPrepList = [...prepList, selectedRecipe];
-        setPrepList(updatedPrepList);
-
-        
-        // const selectedRecipe = recipes.find(
-        //     (r) => r.name === selectedRecipeValue
-        // );
-        // if (selectedRecipe) {
-        //     const newItem = {
-        //         name: selectedRecipe.value,
-        //         ingredients: selectedRecipe.ingredients,
-        //         status: "pending",
-        //     };
-
-        //     const updatedPrepList = [...prepList, newItem];
-        //     setPrepList(updatedPrepList);
-
-        //     await AsyncStorage.setItem(
-        //         "prepList",
-        //         JSON.stringify(updatedPrepList)
-        //     );
-        // }
+        setPrepList([...prepList, selectedRecipe]);
     };
 
-    const handleSelectItem = (itemName) => {
-        if (selectedItems.includes(itemName)) {
-            setSelectedItems(selectedItems.filter((item) => item !== itemName));
-        } else {
-            setSelectedItems([...selectedItems, itemName]);
+    const handleSelectItem = (index) => {
+        const selected = new Set([...selectedItems, index]);
+        if (selectedItems.includes(index)) {
+            selected.delete(index);
         }
+        setSelectedItems(Array.from(selected));
     };
 
     const markItemsAsFinished = async () => {
-        let updatedPrepList = prepList.map((item) => {
-            if (selectedItems.includes(item.name)) {
-                return { ...item, status: "finished" };
-            }
-            return item;
-        });
+        const checkedItems = prepList.filter((_, index) =>
+            selectedItems.includes(index)
+        );
+        const updatedPrepList = prepList.filter(
+            (_, index) => !selectedItems.includes(index)
+        );
 
-        setPrepList(updatedPrepList);
-        await AsyncStorage.setItem("prepList", JSON.stringify(updatedPrepList));
         setSelectedItems([]);
+        setPrepList(updatedPrepList);
+        setFinishedItems([...finishedItems, ...checkedItems]);
     };
 
     const showRecipeCard = (recipeName) => {
@@ -158,11 +63,11 @@ export default function PrepList({ navigation }) {
         }
     };
 
-    const renderItem = ({ item }) => (
+    const renderItem = ({ item, index }) => (
         <View style={styles.listItem}>
             <CheckBox
-                isChecked={selectedItems.includes(item.name)}
-                onClick={() => handleSelectItem(item.name)}
+                isChecked={selectedItems.includes(index)}
+                onClick={() => handleSelectItem(index)}
             />
             <Text style={styles.itemText}>{item.name}</Text>
             <Button
@@ -178,7 +83,8 @@ export default function PrepList({ navigation }) {
 
             <SelectList
                 setSelected={setSelectedRecipeValue}
-                data={recipes.map((recipe) => ({
+                data={recipes.map((recipe, i) => ({
+                    index: i,
                     key: recipe._id,
                     value: recipe.name,
                 }))}
@@ -188,8 +94,8 @@ export default function PrepList({ navigation }) {
             <Button title="Add Item" onPress={onItemAdd} />
 
             <FlatList
-                data={prepList.filter((p) => p.status === "pending")}
-                renderItem={renderItem}
+                data={prepList}
+                renderItem={({ item, index }) => renderItem({ item, index })}
                 keyExtractor={(item, index) => `prep-${index}`}
             />
 
@@ -197,7 +103,7 @@ export default function PrepList({ navigation }) {
 
             <Text style={styles.header}>Finished Items</Text>
             <FlatList
-                data={prepList.filter((p) => p.status === "finished")}
+                data={finishedItems}
                 renderItem={({ item }) => (
                     <Text style={styles.itemText}>{item.name}</Text>
                 )}
@@ -224,7 +130,7 @@ const styles = {
         alignItems: "center",
         padding: 10,
         marginVertical: 8,
-        backgroundColor: "#f9c2ff",
+        backgroundColor: Theme.primary,
         borderRadius: 5,
     },
     itemText: {
