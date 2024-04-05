@@ -21,6 +21,7 @@ export const black = "#000000";
 export const blacks = {
     "75-black": "#000000c0",
 };
+export const transparent = "transparent";
 
 export default {
     ...baseTheme,
@@ -28,4 +29,5 @@ export default {
     black,
     blacks,
     whites,
+    transparent,
 };

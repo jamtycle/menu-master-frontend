@@ -66,7 +66,7 @@ const Login = ({ onLoginProp }) => {
                         value={username}
                         style={styles.input}
                         placeholder="Enter username"
-                        onChangeText={setUsername}
+                        onChangeText={(val) => setUsername(val?.toLocaleLowerCase())}
                         placeholderTextColor={Theme.whites["input-placeholder"]}
                     />
                     <TextInput

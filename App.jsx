@@ -54,14 +54,14 @@ export default function App() {
     useEffect(() => loginAction(), [userRole, navigationRef]);
 
     const onLogin = (role) => {
-        console.log(role);
+        // console.log(role);
         setUserRole(role);
     };
 
     if (fontError) console.error(fontError);
     if (!fontsLoaded && !fontError) return null;
 
-    return (
+    return (        
         <NavigationContainer ref={navigationRef}>
             <SafeAreaView style={styles.container} onLayout={onLayoutRootView}>
                 <Stack.Navigator
@@ -97,6 +97,6 @@ export default function App() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Theme.white,
+        backgroundColor: Theme.primary,
     },
 });

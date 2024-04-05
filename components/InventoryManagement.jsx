@@ -1,7 +1,16 @@
+/* eslint-disable react-native/no-color-literals */
 import { useState, useEffect } from "react";
-import { View, Text, FlatList, Button, TextInput } from "react-native";
+import {
+    View,
+    Text,
+    FlatList,
+    Button,
+    TextInput,
+    StyleSheet,
+} from "react-native";
 // import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+// import { StyleSheet } from "react-native-web";
 
 export default function InventoryManagement() {
     const [inventory, setInventory] = useState([]);
@@ -22,13 +31,17 @@ export default function InventoryManagement() {
 
             for (let i = 0; i < inventory_response.data.data.length; i++) {
                 for (let j = 0; j < ingredient_response.data.data.length; j++) {
-                    if (inventory_response.data.data[i].ingredient_id === ingredient_response.data.data[j]._id) {
-                        ingredient_response.data.data[j].quantity = inventory_response.data.data[i].stock || 0;
+                    if (
+                        inventory_response.data.data[i].ingredient_id ===
+                        ingredient_response.data.data[j]._id
+                    ) {
+                        ingredient_response.data.data[j].quantity =
+                            inventory_response.data.data[i].stock || 0;
                     }
                 }
             }
-            console.log(ingredient_response.data.data);
-            console.log(inventory_response.data.data);
+            // console.log(ingredient_response.data.data);
+            // console.log(inventory_response.data.data);
             setInventory(ingredient_response.data.data || []);
         } catch (error) {
             console.error("Failed to fetch inventory data", error);
@@ -39,55 +52,95 @@ export default function InventoryManagement() {
         initializeData();
     }, []);
 
-    const updateInventoryItem = async (itemId) => {
-        try {
-            const updatedInventory = inventory.map((item) =>
-                item._id === itemId
-                    ? { ...item, quantity: parseInt(editQuantity, 10) }
-                    : item
-            );
+    const updateInventoryItem = (itemId) => {
+        const q = parseFloat(editQuantity);
+        if (isNaN(q)) return;
+        if (q === 0) return;
+        // console.log("Updating inventory item", itemId, q);
 
-            // Update the backend with the new quantity
-            await axios.put("http://170.187.155.55:27041/ingredient/65f8954489e6e77ac7fb1027", {
-                _id: itemId,
-                quantity: parseInt(editQuantity, 10),
-            });
+        axios
+            .put("http://170.187.155.55:27041/inventory", {
+                ingredient_id: itemId,
+                stock: parseFloat(editQuantity, 10),
+            })
+            .then((res) => {
+                if (!res.data) return;
+                // console.log(res.data);
+                if (!res.data.data) return;
 
-            setInventory(updatedInventory);
-            setEditItemId(null);
-            setEditQuantity("");
-        } catch (error) {
-            console.error("Failed to update inventory item", error);
-        }
+                const ninv = inventory.map((item) => {
+                    if (item._id !== itemId) return item;
+                    return {
+                        ...item,
+                        quantity: item.quantity + parseFloat(editQuantity, 10),
+                    };
+                });
+
+                setInventory(ninv);
+                setEditItemId(null);
+                setEditQuantity("");
+            })
+            .catch((ex) => console.error(ex));
     };
 
     const renderItem = ({ item }) => (
         <View style={styles.listItem}>
             <Text style={styles.itemName}>{item.name}</Text>
             {editItemId === item._id ? (
-                <TextInput
-                    style={styles.input}
-                    onChangeText={setEditQuantity}
-                    value={editQuantity}
-                    keyboardType="numeric"
-                    placeholder="Enter new quantity"
-                />
+                <>
+                    <Text style={styles.itemQuantity}>{`${Number(
+                        item.quantity
+                    ).toFixed(2)}`}</Text>
+                    <TextInput
+                        style={styles.input}
+                        onChangeText={(val) => {
+                            setEditQuantity(val);
+                        }}
+                        value={editQuantity}
+                        keyboardType="decimal-pad"
+                        // placeholder="Enter new quantity"
+                        // onBlur={() => setEditItemId(null)}
+                    />
+                    <Button
+                        title="+/-"
+                        onPress={() => {
+                            const q = parseFloat(editQuantity);
+                            if (isNaN(q)) return;
+                            setEditQuantity(
+                                (parseFloat(editQuantity) * -1).toFixed(2)
+                            );
+                        }}
+                    />
+                </>
             ) : (
-                <Text
-                    style={styles.itemQuantity}
-                >{`Quantity: ${item.quantity}`}</Text>
+                <Text style={styles.itemQuantity}>{`Quantity: ${Number(
+                    item.quantity
+                ).toFixed(2)}`}</Text>
             )}
             {editItemId === item._id ? (
                 <Button
-                    title="Save"
-                    onPress={() => updateInventoryItem(item._id)}
+                    title={
+                        editQuantity && !editQuantity.startsWith("0")
+                            ? "Add"
+                            : "Cancel"
+                    }
+                    color={
+                        editQuantity && !editQuantity.startsWith("0")
+                            ? "green"
+                            : "red"
+                    }
+                    onPress={() => {
+                        if (editQuantity && !editQuantity.startsWith("0"))
+                            updateInventoryItem(item._id);
+                        else setEditItemId(null);
+                    }}
                 />
             ) : (
                 <Button
                     title="Edit"
                     onPress={() => {
                         setEditItemId(item._id);
-                        setEditQuantity(item.quantity.toString());
+                        setEditQuantity("0");
                     }}
                 />
             )}
@@ -106,9 +159,11 @@ export default function InventoryManagement() {
     );
 }
 
-const styles = {
+const styles = StyleSheet.create({
     container: {
         flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
         padding: 10,
         marginTop: 20,
     },
@@ -120,14 +175,16 @@ const styles = {
     listItem: {
         backgroundColor: "#f7f7f7",
         padding: 10,
-        marginVertical: 8,
+        marginVertical: 4,
         borderRadius: 5,
+        flex: 1,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
     },
     itemName: {
         fontSize: 18,
+        width: "50%",
     },
     itemQuantity: {
         fontSize: 16,
@@ -136,6 +193,6 @@ const styles = {
         borderWidth: 1,
         borderColor: "#ddd",
         padding: 8,
-        width: 100,
+        width: "auto",
     },
-};
+});
